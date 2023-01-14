@@ -1,8 +1,12 @@
 using FormulaOneCRUDAppCore6.Configurations;
 using FormulaOneCRUDAppCore6.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +20,8 @@ builder.Services.AddSwaggerGen();
 /// <summary>
 /// Connection String
 /// </summary>
-builder.Services.AddDbContext<AppDBContext>(options=>
-options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),ServiceLifetime.Singleton);
+builder.Services.AddDbContext<AppDBContext>(options =>
+options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")), ServiceLifetime.Singleton);
 
 /// <summary>
 /// JWT Configuration
@@ -25,6 +29,32 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectio
 /// It allow us to utilize our configuration within the DI Container(Dependency Injection Container).
 /// </summary>
 builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
+
+
+/// <summary>
+/// JWT Service
+/// </summary>
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(jwt =>
+{
+    var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtConfig:SecretKey").Value);
+    jwt.SaveToken = true;
+    jwt.TokenValidationParameters = new TokenValidationParameters()
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false, //for development purpose(Should contain SSL)
+        ValidateAudience = false, //for development purpose(Should contain SSL)
+        RequireExpirationTime = false, //for development purpose(needs to be updated when refresh token is added
+        ValidateLifetime = true, //It will check the lifetime of the token i.e for how much time token should be validated and once time is up it will get rejected
+    };
+});
 
 
 /// <summary>
@@ -44,13 +74,14 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    
+
 }
 
 app.UseCors("corspolicy");
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
