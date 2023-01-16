@@ -1,0 +1,12 @@
+For authentication in .net Core 6
+
+1) Add secretkey in appsetting.json
+2) Add a class with same name and with property of name secretkey
+3) Add Jwt configuration in program.cs file. This will check our appsetting.json for the JwtConfig
+   builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
+4) Add Jwt Service for using Default Authentication Scheme that our application will use
+5) Now we have to tell application to use authentication for we will add
+   app.UseAuthentication();
+6) Added IdentityDBContext in AppDBContext. It will take care of all the tables regarding User name, password, token etc. storage in our Database 
+7) Created Class AuthResult to get token result i.e if request is succes or time stamp etc.
+8) Now we are creating the dto(data transfer object) for user registration
