@@ -1,5 +1,7 @@
 ﻿using FormulaOneCRUDAppCore6.Data;
 using FormulaOneCRUDAppCore6.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -7,7 +9,7 @@ using System.Collections.Generic;
 namespace FormulaOneCRUDAppCore6.Controllers
 {
 
-    
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 	[Route("api/[controller]")]
 	[ApiController]
 	public class TeamsController : ControllerBase

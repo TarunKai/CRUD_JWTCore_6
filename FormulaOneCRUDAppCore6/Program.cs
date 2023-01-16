@@ -1,6 +1,7 @@
 using FormulaOneCRUDAppCore6.Configurations;
 using FormulaOneCRUDAppCore6.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,14 +38,18 @@ builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfi
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    //Here we are defining that our Default Authentication Scheme is JWT Bearer in this application
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; 
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(jwt =>
 {
+    //Here we are defining that all the keys we are getting for JWT is from appsetting 
     var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtConfig:SecretKey").Value);
     jwt.SaveToken = true;
+
+    //TokenValidationParameters is basically checking that token is not any random token
     jwt.TokenValidationParameters = new TokenValidationParameters()
     {
         ValidateIssuerSigningKey = true,
@@ -56,6 +61,11 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+
+//Have to add default identity manager with user
+//Need to understand
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedEmail = false)
+    .AddEntityFrameworkStores<AppDBContext>();
 
 /// <summary>
 /// Setting up the CORS Policy
