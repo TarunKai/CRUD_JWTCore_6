@@ -1,7 +1,7 @@
 For authentication in .net Core 6
 
 1) Add secretkey in appsetting.json
-2) Add a class with same name and with property of name secretkey
+2) Make a folder with a name Configuration and add a class with same name and with property of name secretkey
 3) Add Jwt configuration in program.cs file. This will check our appsetting.json for the JwtConfig
    builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
 4) Add Jwt Service for using Default Authentication Scheme that our application will use
@@ -10,3 +10,16 @@ For authentication in .net Core 6
 6) Added IdentityDBContext in AppDBContext. It will take care of all the tables regarding User name, password, token etc. storage in our Database 
 7) Created Class AuthResult to get token result i.e if request is succes or time stamp etc.
 8) Now we are creating the dto(data transfer object) for user registration
+
+For Refresh Token
+
+1) We need to abstract the key in program.cs file to make it resuable
+2) Now set the expiry time of token in appsetting.json
+3) Add the property of ExpiryTimeFrame in Configuration folder where we had made the class jwtconfig
+4) Now add Expiry time dynamic in Authentication Controller where we had generated token 
+   Expires =  DateTime.UtcNow.Add(TimeSpan.Parse(_configuration.GetSection("JwtConfig:ExpiryTimeFrame").Value)),
+5) Add a property as refreshtoken in AuthResult class in Models
+6) Create new class inside DTO folder with name RefreshToken(The idea behind this is whenever user needs to refresh there token they need to send there jwt token and the refresh token so that we are able to provide them new jwt token bcz there orignal is expired)
+7) Now we have to create a table inside a DB to store token and see that which token belongs to which user for validation to make sure that token actually belong to certain  user for this we maek a class name refreshtoken in models
+8) add dbset of refreshtoken class in appdbcontext
+ 

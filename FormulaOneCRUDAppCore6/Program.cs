@@ -32,6 +32,18 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectio
 builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("JwtConfig"));
 
 
+var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtConfig:SecretKey").Value);
+
+var tokenValidationParameter = new TokenValidationParameters()
+{
+    ValidateIssuerSigningKey = true,
+    IssuerSigningKey = new SymmetricSecurityKey(key),
+    ValidateIssuer = false, //for development purpose(Should contain SSL)
+    ValidateAudience = false, //for development purpose(Should contain SSL)
+    RequireExpirationTime = false, //for development purpose(needs to be updated when refresh token is added
+    ValidateLifetime = true, //It will check the lifetime of the token i.e for how much time token should be validated and once time is up it will get rejected
+};
+
 /// <summary>
 /// JWT Service
 /// </summary>
@@ -46,19 +58,21 @@ builder.Services.AddAuthentication(options =>
 .AddJwtBearer(jwt =>
 {
     //Here we are defining that all the keys we are getting for JWT is from appsetting 
-    var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtConfig:SecretKey").Value);
+    //We have shifted below key above to make it resuable
+    //var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtConfig:SecretKey").Value);
     jwt.SaveToken = true;
+    jwt.TokenValidationParameters = tokenValidationParameter;
 
     //TokenValidationParameters is basically checking that token is not any random token
-    jwt.TokenValidationParameters = new TokenValidationParameters()
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false, //for development purpose(Should contain SSL)
-        ValidateAudience = false, //for development purpose(Should contain SSL)
-        RequireExpirationTime = false, //for development purpose(needs to be updated when refresh token is added
-        ValidateLifetime = true, //It will check the lifetime of the token i.e for how much time token should be validated and once time is up it will get rejected
-    };
+    //jwt.TokenValidationParameters = new TokenValidationParameters()
+    //{
+    //    ValidateIssuerSigningKey = true,
+    //    IssuerSigningKey = new SymmetricSecurityKey(key),
+    //    ValidateIssuer = false, //for development purpose(Should contain SSL)
+    //    ValidateAudience = false, //for development purpose(Should contain SSL)
+    //    RequireExpirationTime = false, //for development purpose(needs to be updated when refresh token is added
+    //    ValidateLifetime = true, //It will check the lifetime of the token i.e for how much time token should be validated and once time is up it will get rejected
+    //};
 });
 
 

@@ -163,7 +163,7 @@ namespace FormulaOneCRUDAppCore6.Controllers
 
                 //Expires = It is the property of SecurityTokenDescriptor
 
-                Expires = DateTime.Now.AddHours(1),
+                Expires =  DateTime.UtcNow.Add(TimeSpan.Parse(_configuration.GetSection("JwtConfig:ExpiryTimeFrame").Value)),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256),
             };
 
