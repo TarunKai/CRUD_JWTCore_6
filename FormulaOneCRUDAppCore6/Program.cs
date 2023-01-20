@@ -75,6 +75,8 @@ builder.Services.AddAuthentication(options =>
     //};
 });
 
+builder.Services.AddSingleton(tokenValidationParameter);
+
 
 //Have to add default identity manager with user
 //Need to understand

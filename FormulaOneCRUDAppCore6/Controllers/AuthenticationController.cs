@@ -1,4 +1,5 @@
 ﻿using FormulaOneCRUDAppCore6.Configurations;
+using FormulaOneCRUDAppCore6.Data;
 using FormulaOneCRUDAppCore6.Models;
 using FormulaOneCRUDAppCore6.Models.DTOs;
 using Microsoft.AspNetCore.Http;
@@ -19,15 +20,22 @@ namespace FormulaOneCRUDAppCore6.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         //private readonly JwtConfig _jwtConfig;
         private readonly IConfiguration _configuration;
+        //FOR USING AppDBContext
+        private readonly AppDBContext _appDBContext;
+        private readonly TokenValidationParameters _tokenValidationParameters;
 
         public AuthenticationController(UserManager<IdentityUser> userManager,
             //JwtConfig jwtConfig,
-            IConfiguration configuration
+            IConfiguration configuration,
+            AppDBContext appDBContext,
+            TokenValidationParameters tokenValidationParameters
             )
         {
             _userManager = userManager;
 
             _configuration = configuration;
+            _appDBContext = appDBContext;
+            _tokenValidationParameters = tokenValidationParameters;
         }
 
         [HttpPost]
@@ -65,12 +73,13 @@ namespace FormulaOneCRUDAppCore6.Controllers
                 {
                     //Generate Token
 
-                    var token = GenerateJwtToken(new_user);
-                    return Ok(new AuthResult()
-                    {
-                        Result = true,
-                        Token = token,
-                    });
+                    var token = await GenerateJwtToken(new_user);
+                    //return Ok(new AuthResult()
+                    //{
+                    //    Result = true,
+                    //    Token = token,
+                    //});
+                    return Ok(token);
                 }
                 return BadRequest(new AuthResult()
                 {
@@ -119,13 +128,17 @@ namespace FormulaOneCRUDAppCore6.Controllers
                     });
                 }
 
-                var jwtToken = GenerateJwtToken(existing_user);
+                var jwtToken = await GenerateJwtToken(existing_user);
 
-                return Ok(new AuthResult()
-                {
-                    Token = jwtToken,
-                    Result = true
-                });
+                //For refresh token we commented this and added below in generate token
+                //we done this to skip making two methods
+                //return Ok(new AuthResult()
+                //{
+                //    Token = jwtToken,
+                //    RefreshToken="",
+                //    Result = true
+                //});
+                return Ok(jwtToken);
             }
 
             return BadRequest(new AuthResult()
@@ -139,7 +152,7 @@ namespace FormulaOneCRUDAppCore6.Controllers
             });
         }
 
-        private string GenerateJwtToken(IdentityUser user)
+        private async Task<AuthResult> GenerateJwtToken(IdentityUser user)
         {
             //Create token handler which is responsible for generating our token
             var jwtTokenHandler = new JwtSecurityTokenHandler();
@@ -174,7 +187,34 @@ namespace FormulaOneCRUDAppCore6.Controllers
             //Since here token is of type Security Token so we are converting it into string
             var jwtToken = jwtTokenHandler.WriteToken(token);
 
-            return jwtToken;
+            var refreshToken = new RefreshToken()
+            {
+                JwtId = token.Id,
+                Token = RandomStringGeneration(22),//Generate refresh token
+                AddedDate = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddMonths(6),
+                IsRevoked = false,
+                IsUsed = false,
+                UserId = user.Id,
+            };
+
+            await _appDBContext.RefreshTokens.AddAsync(refreshToken);
+            await _appDBContext.SaveChangesAsync();
+
+            //Added for refresh token
+            return new AuthResult()
+            {
+                Token = jwtToken,
+                RefreshToken = refreshToken.Token,
+                Result = true
+            };
+        }
+
+        private string RandomStringGeneration(int length)
+        {
+            var random = new Random();
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ098764321abcdefghijklmnopqrstuvwxyz_@";
+            return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 }
