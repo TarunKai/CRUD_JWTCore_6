@@ -21,5 +21,28 @@ For Refresh Token
 5) Add a property as refreshtoken in AuthResult class in Models
 6) Create new class inside DTO folder with name RefreshToken(The idea behind this is whenever user needs to refresh there token they need to send there jwt token and the refresh token so that we are able to provide them new jwt token bcz there orignal is expired)
 7) Now we have to create a table inside a DB to store token and see that which token belongs to which user for validation to make sure that token actually belong to certain  user for this we maek a class name refreshtoken in models
-8) add dbset of refreshtoken class in appdbcontext
+8) add dbset of refreshtoken class in appdbcontext.
+9) In authenticationController use DI and inject
+     private readonly AppDBContext _appDBContext;
+     private readonly TokenValidationParameters _tokenValidationParameters;
+   to use these context and validator
+10) Now add refreshtoken variable(present in AuthResult class) in Login method for existing user.
+11) Now create refresh token object as
+    var refreshToken = new RefreshToken()
+            {
+                JwtId = token.Id,
+                Token = "",
+                AddedDate = DateTime.UtcNow,
+                ExpiryDate = DateTime.UtcNow.AddMonths(6),
+                IsRevoked = false,
+                IsUsed = false,
+                UserId = user.Id,
+            };
+
+            await _appDBContext.RefreshTokens.AddAsync(refreshToken);
+            await _appDBContext.SaveChangesAsync();
+    Below 
+    var jwtToken = jwtTokenHandler.WriteToken(token);
+    i.e. created for first time in generatetoken method
+12) Now we will generate random string based on our requirement
  
